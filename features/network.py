@@ -400,7 +400,7 @@ def _extract_whois_features(hostname: str, timeout: float) -> Dict[str, Any]:
     if record is None:
         return features
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
 
     # --- Dates (features 31, 32, 33, 34) -------------------------------------
     creation = _to_naive_utc(getattr(record, "creation_date", None))
