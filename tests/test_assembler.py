@@ -113,7 +113,7 @@ def test_vector_is_1d(assemble):
 # ---------------------------------------------------------------------------
 def test_network_defaults_present_when_offline(assemble, feature_names):
     """With network disabled, network_features_available must be falsy (0)."""
-    vec = np.asarray(assemble("paypal-secure-login.xyz"), dtype=float)
+    vec = np.asarray(assemble("paypal-secure-login.xyz", include_network=False), dtype=float)
     names = list(feature_names)
     if "network_features_available" in names:
         idx = names.index("network_features_available")

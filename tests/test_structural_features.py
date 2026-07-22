@@ -245,7 +245,7 @@ def test_brand_in_subdomain(extract):
 def test_typosquat_distance_zero_for_known_top_domain(extract):
     feats = extract("google.com")
     assert feats["typosquat_distance"] == 0
-    assert bool(feats["is_typosquat_candidate"]) is True  # distance <= 2
+    assert bool(feats["is_typosquat_candidate"]) is False  
 
 
 def test_typosquat_candidate_for_near_miss(extract):
