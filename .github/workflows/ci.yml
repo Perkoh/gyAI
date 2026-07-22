@@ -1,0 +1,106 @@
+# ============================================================
+# gyAI — Continuous Integration
+# Runs on every pull request: the test suite (the real gate) plus
+# advisory linting. The suite is test-first (pytest.importorskip), so
+# not-yet-built modules SKIP rather than fail, and nothing touches the
+# network, Redis, Supabase, or a real model — no secrets required.
+# ============================================================
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Cancel superseded runs on the same branch/PR.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Matches the production Docker image (python:3.12-slim).
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  test:
+    name: Tests (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install system libraries
+        # libgomp1 = OpenMP runtime LightGBM/SHAP link against at import time.
+        # Without it, `import lightgbm` raises OSError (which importorskip does
+        # NOT catch), turning skips into hard errors.
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgomp1
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run tests
+        env:
+          TESTING: "true"
+          FLASK_ENV: "testing"
+          REQUIRE_MODEL: "false"
+          # A dummy URL keeps any Redis-config code paths happy; nothing
+          # actually connects (fixtures use the in-memory FakeRedis).
+          REDIS_URL: "redis://localhost:6379/0"
+        run: pytest -q --cov=. --cov-report=term-missing
+
+  lint:
+    name: Lint (flake8 / black / mypy)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install lint tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install black==24.4.2 flake8==7.0.0 mypy==1.10.0
+
+      # BLOCKING — real bugs only: syntax errors (E9) and undefined names
+      # (F63/F7/F82). This is GitHub's recommended Python lint gate and won't
+      # trip on style/unused-imports while the codebase is still being built.
+      - name: flake8 (critical errors)
+        run: |
+          flake8 . \
+            --count --select=E9,F63,F7,F82 --show-source --statistics \
+            --exclude=.git,__pycache__,build,dist,.venv,venv,extension,ml/models
+
+      # ADVISORY — style + typing. Reported in the log but never blocks, so
+      # incremental/unformatted work doesn't wall a PR. Run `black .` locally
+      # to keep these clean; flip continue-on-error to false to enforce.
+      - name: black --check (advisory)
+        continue-on-error: true
+        run: black --check --diff .
+
+      - name: flake8 full (advisory)
+        run: |
+          flake8 . \
+            --count --exit-zero --statistics \
+            --max-line-length=100 --extend-ignore=E203,W503 \
+            --exclude=.git,__pycache__,build,dist,.venv,venv,extension,ml/models
+
+      - name: mypy (advisory)
+        continue-on-error: true
+        run: mypy . --ignore-missing-imports --no-strict-optional --exclude '(extension/|ml/models/)'

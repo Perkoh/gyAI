@@ -1,0 +1,114 @@
+<!doctype html>
+<!--
+  gyAI — Toolbar Popup (extension/src/popup/popup.html)
+  ====================================================
+  Structure only; all dynamic state is populated by popup.ts (bundled to
+  popup.js). Manifest V3 CSP forbids inline script, so the logic loads as an
+  external module bundle. Layout mirrors blueprint §11.3.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>gyAI</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="adis-popup">
+      <!-- Brand header -->
+      <header class="adis-head">
+        <span class="adis-head__mark" aria-hidden="true">🛡</span>
+        <span class="adis-head__name">gyAI Domain Intelligence</span>
+      </header>
+
+      <!-- Live status card — filled by popup.ts -->
+      <main class="adis-main">
+        <section
+          id="status-card"
+          class="adis-card adis-card--loading"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <p class="adis-card__loading">Checking this site…</p>
+        </section>
+
+        <!-- Primary action: report the current site -->
+        <button id="report-toggle" class="adis-btn adis-btn--block" type="button" hidden>
+          Report This Site
+        </button>
+
+        <!-- Report verdict chooser (revealed by report-toggle) -->
+        <section id="report-panel" class="adis-panel" hidden>
+          <p class="adis-panel__label">What's wrong with this site?</p>
+          <div class="adis-panel__choices">
+            <button class="adis-choice" type="button" data-verdict="false_positive">
+              It's safe — false alarm
+            </button>
+            <button class="adis-choice" type="button" data-verdict="confirmed_malicious">
+              It's dangerous
+            </button>
+            <button class="adis-choice" type="button" data-verdict="unsure">
+              I'm not sure
+            </button>
+          </div>
+          <p id="report-status" class="adis-panel__status" role="status"></p>
+        </section>
+      </main>
+
+      <!-- Footer controls -->
+      <footer class="adis-foot">
+        <button id="settings-toggle" class="adis-link" type="button">Settings</button>
+        <button id="docs-link" class="adis-link" type="button">View API Docs</button>
+      </footer>
+
+      <!-- Settings panel (revealed by settings-toggle) -->
+      <section id="settings-panel" class="adis-settings" hidden>
+        <div class="adis-setting">
+          <label class="adis-switch" for="set-enabled">
+            <span class="adis-switch__text">
+              <span class="adis-switch__title">Protection</span>
+              <span class="adis-switch__sub">Analyze sites as you browse</span>
+            </span>
+            <input id="set-enabled" type="checkbox" class="adis-switch__input" />
+            <span class="adis-switch__track" aria-hidden="true"></span>
+          </label>
+        </div>
+
+        <div class="adis-setting">
+          <label class="adis-switch" for="set-caution">
+            <span class="adis-switch__text">
+              <span class="adis-switch__title">Caution banners</span>
+              <span class="adis-switch__sub">Show yellow low-risk notices</span>
+            </span>
+            <input id="set-caution" type="checkbox" class="adis-switch__input" />
+            <span class="adis-switch__track" aria-hidden="true"></span>
+          </label>
+        </div>
+
+        <div class="adis-setting adis-setting--stack">
+          <label class="adis-field__label" for="set-apiurl">API endpoint</label>
+          <input
+            id="set-apiurl"
+            type="url"
+            inputmode="url"
+            class="adis-field__input"
+            placeholder="https://gyai-api.fly.dev/api/v1"
+            spellcheck="false"
+          />
+          <p id="apiurl-error" class="adis-field__error" role="alert" hidden>
+            Must be an https:// address.
+          </p>
+        </div>
+
+        <div class="adis-setting adis-setting--stack">
+          <button id="clear-cache" class="adis-btn adis-btn--ghost adis-btn--block" type="button">
+            Clear cached results
+          </button>
+          <p id="clear-status" class="adis-field__note" role="status"></p>
+        </div>
+      </section>
+    </div>
+
+    <script src="popup.js" defer></script>
+  </body>
+</html>

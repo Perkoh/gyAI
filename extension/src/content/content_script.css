@@ -1,0 +1,273 @@
+/**
+ * gyAI — Content Banner Styles (extension/src/content/content_script.css)
+ * ======================================================================
+ *
+ * Loaded INTO the banner's open Shadow DOM (see content_script.ts), so every
+ * selector is scoped to that shadow tree — no page styles reach in, none leak
+ * out. `:host` targets the fixed positioning wrapper the script attaches to the
+ * page. Because we're isolated, selectors stay flat (single class) and low
+ * specificity by design.
+ *
+ * Design intent (blueprint §1.4 "non-intrusive", §11): the banner should read
+ * as part of the browser's trust layer, not a branded overlay — hence a native
+ * system font stack and a restrained amber→red escalation. The one bold move is
+ * the saturated red alert bar; the caution tier stays soft. Quality floor:
+ * responsive to mobile, visible keyboard focus, reduced motion respected.
+ */
+
+/* --------------------------------------------------------------- host + tokens */
+
+:host {
+  /* Positioning is also set inline in JS; repeated here for completeness. */
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 2147483647;
+
+  /* Shared tokens. Per-tier palettes are set on the .adis-banner modifier. */
+  --adis-font: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+  --adis-radius: 8px;
+  --adis-shadow: 0 6px 24px rgba(16, 24, 40, 0.18);
+  --adis-maxw: 960px;
+}
+
+/* --------------------------------------------------------------- banner shell */
+
+.adis-banner {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--adis-maxw);
+  margin: 0 auto;
+  padding: 14px 16px 16px;
+  border-radius: 0 0 var(--adis-radius) var(--adis-radius);
+  border-top: 4px solid var(--adis-edge);
+  background: var(--adis-bg);
+  color: var(--adis-ink);
+  box-shadow: var(--adis-shadow);
+  font-family: var(--adis-font);
+  font-size: 14px;
+  line-height: 1.45;
+  outline: none;
+  animation: adis-slide-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Caution — soft amber wash, dark warm ink. */
+.adis-banner--caution {
+  --adis-bg: #fff4e5;
+  --adis-edge: #f79009;
+  --adis-ink: #7a2e0e;
+  --adis-ink-soft: #93400f;
+  --adis-btn-primary-bg: #b54708;
+  --adis-btn-primary-ink: #ffffff;
+  --adis-btn-ghost-border: rgba(122, 46, 14, 0.35);
+  --adis-btn-ghost-ink: #7a2e0e;
+  --adis-focus: #b54708;
+}
+
+/* Alert — the one bold surface: saturated red, light ink. */
+.adis-banner--alert {
+  --adis-bg: #b42318;
+  --adis-edge: #7a271a;
+  --adis-ink: #ffffff;
+  --adis-ink-soft: rgba(255, 255, 255, 0.82);
+  --adis-btn-primary-bg: #ffffff;
+  --adis-btn-primary-ink: #b42318;
+  --adis-btn-ghost-border: rgba(255, 255, 255, 0.55);
+  --adis-btn-ghost-ink: #ffffff;
+  --adis-focus: #ffffff;
+}
+
+/* --------------------------------------------------------------- header */
+
+.adis-banner__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.adis-banner__icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.adis-banner__title {
+  flex: 1 1 auto;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+}
+
+.adis-banner__close {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--adis-ink);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 120ms ease, background-color 120ms ease;
+}
+
+.adis-banner__close:hover {
+  opacity: 1;
+  background: rgba(127, 127, 127, 0.18);
+}
+
+/* --------------------------------------------------------------- body */
+
+.adis-banner__summary {
+  margin: 8px 0 6px;
+  font-weight: 600;
+}
+
+.adis-banner__reasons {
+  margin: 0;
+  padding: 0 0 0 18px;
+  list-style: disc;
+}
+
+.adis-banner__reasons li {
+  margin: 3px 0;
+  color: var(--adis-ink-soft);
+}
+
+.adis-banner__details {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(127, 127, 127, 0.12);
+  color: var(--adis-ink-soft);
+  font-size: 13px;
+}
+
+.adis-banner__details[hidden] {
+  display: none;
+}
+
+/* --------------------------------------------------------------- actions */
+
+.adis-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.adis-banner__btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 9px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 80ms ease, filter 120ms ease, background-color 120ms ease;
+}
+
+.adis-banner__btn:active {
+  transform: translateY(1px);
+}
+
+.adis-banner__btn--primary {
+  background: var(--adis-btn-primary-bg);
+  color: var(--adis-btn-primary-ink);
+}
+
+.adis-banner__btn--primary:hover {
+  filter: brightness(0.94);
+}
+
+.adis-banner__btn--ghost {
+  background: transparent;
+  border-color: var(--adis-btn-ghost-border);
+  color: var(--adis-btn-ghost-ink);
+}
+
+.adis-banner__btn--ghost:hover {
+  background: rgba(127, 127, 127, 0.14);
+}
+
+/* --------------------------------------------------------------- footer / report */
+
+.adis-banner__footer {
+  margin-top: 12px;
+}
+
+.adis-banner__report {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--adis-ink-soft);
+  font-family: inherit;
+  font-size: 12.5px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.adis-banner__report:hover {
+  color: var(--adis-ink);
+}
+
+.adis-banner__report:disabled {
+  cursor: default;
+  text-decoration: none;
+  opacity: 0.9;
+}
+
+/* --------------------------------------------------------------- focus ring */
+
+.adis-banner__close:focus-visible,
+.adis-banner__btn:focus-visible,
+.adis-banner__report:focus-visible {
+  outline: 2px solid var(--adis-focus);
+  outline-offset: 2px;
+}
+
+/* The container is focus-target for alerts but shouldn't show a ring itself. */
+.adis-banner:focus-visible {
+  outline: none;
+}
+
+/* --------------------------------------------------------------- responsive */
+
+@media (max-width: 560px) {
+  .adis-banner {
+    font-size: 13.5px;
+    padding: 12px 12px 14px;
+  }
+
+  .adis-banner__actions {
+    flex-direction: column-reverse;
+  }
+
+  .adis-banner__btn {
+    width: 100%;
+  }
+}
+
+/* --------------------------------------------------------------- motion */
+
+@keyframes adis-slide-in {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adis-banner {
+    animation: none;
+  }
+}

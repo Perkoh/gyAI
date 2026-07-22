@@ -1,0 +1,433 @@
+/**
+ * gyAI — Toolbar Popup Styles (extension/src/popup/popup.css)
+ * ==========================================================
+ *
+ * Styles the browser-action popup (blueprint §11.3). This is the extension's
+ * own document (no host page to collide with), so plain scoped CSS is fine.
+ *
+ * Design intent: the popup is the calm, "chrome" side of gyAI — a dark slate
+ * header for identity, a white body, and a single colour-coded status card that
+ * borrows the exact safe→caution→alert palette used by the injected banner, so
+ * the two surfaces read as one product. Boldness is spent only on that card;
+ * everything else stays quiet.
+ */
+
+:root {
+  --adis-font: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  --adis-ink: #1d2939;
+  --adis-ink-soft: #475467;
+  --adis-border: #eaecf0;
+  --adis-surface: #ffffff;
+
+  --adis-brand: #0b1220; /* slate header */
+  --adis-brand-ink: #f5f7fa;
+
+  /* Status palette — mirrors content_script.css. */
+  --adis-safe-bg: #ecfdf3;
+  --adis-safe-ink: #067647;
+  --adis-safe-edge: #12b76a;
+
+  --adis-caution-bg: #fffaeb;
+  --adis-caution-ink: #b54708;
+  --adis-caution-edge: #f79009;
+
+  --adis-alert-bg: #fef3f2;
+  --adis-alert-ink: #b42318;
+  --adis-alert-edge: #f04438;
+
+  --adis-neutral-bg: #f9fafb;
+  --adis-neutral-edge: #d0d5dd;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  width: 320px;
+  font-family: var(--adis-font);
+  color: var(--adis-ink);
+  background: var(--adis-surface);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* ------------------------------------------------------------------- header */
+
+.adis-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--adis-brand);
+  color: var(--adis-brand-ink);
+}
+
+.adis-head__mark {
+  font-size: 16px;
+}
+
+.adis-head__name {
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+}
+
+/* --------------------------------------------------------------------- main */
+
+.adis-main {
+  padding: 14px 16px 8px;
+}
+
+/* Status card — the one coloured surface. */
+.adis-card {
+  border: 1px solid var(--adis-neutral-edge);
+  border-left-width: 4px;
+  border-radius: 8px;
+  background: var(--adis-neutral-bg);
+  padding: 12px 14px;
+  min-height: 76px;
+}
+
+.adis-card--loading .adis-card__loading,
+.adis-card__loading {
+  margin: 0;
+  color: var(--adis-ink-soft);
+}
+
+.adis-card--safe {
+  background: var(--adis-safe-bg);
+  border-color: var(--adis-safe-edge);
+}
+.adis-card--caution {
+  background: var(--adis-caution-bg);
+  border-color: var(--adis-caution-edge);
+}
+.adis-card--alert {
+  background: var(--adis-alert-bg);
+  border-color: var(--adis-alert-edge);
+}
+.adis-card--off,
+.adis-card--unknown {
+  background: var(--adis-neutral-bg);
+  border-color: var(--adis-neutral-edge);
+}
+
+.adis-card__label {
+  margin: 0 0 2px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--adis-ink-soft);
+}
+
+.adis-card__domain {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.adis-card__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 2px;
+  font-weight: 600;
+}
+
+.adis-card--safe .adis-card__status {
+  color: var(--adis-safe-ink);
+}
+.adis-card--caution .adis-card__status {
+  color: var(--adis-caution-ink);
+}
+.adis-card--alert .adis-card__status {
+  color: var(--adis-alert-ink);
+}
+
+.adis-card__status-icon {
+  font-size: 15px;
+}
+
+.adis-card__score {
+  margin: 0;
+  font-size: 13px;
+  color: var(--adis-ink-soft);
+}
+
+.adis-card__notice-title {
+  margin: 0 0 3px;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.adis-card__notice-detail {
+  margin: 0;
+  font-size: 13px;
+  color: var(--adis-ink-soft);
+}
+
+/* ------------------------------------------------------------------ buttons */
+
+.adis-btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 9px 14px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 120ms ease, filter 120ms ease, transform 80ms ease;
+}
+
+.adis-btn:active {
+  transform: translateY(1px);
+}
+
+.adis-btn--block {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.adis-btn:not(.adis-btn--ghost) {
+  background: var(--adis-ink);
+  color: #fff;
+}
+.adis-btn:not(.adis-btn--ghost):hover {
+  filter: brightness(1.12);
+}
+
+.adis-btn--ghost {
+  background: transparent;
+  border-color: var(--adis-border);
+  color: var(--adis-ink);
+}
+.adis-btn--ghost:hover {
+  background: var(--adis-neutral-bg);
+}
+
+.adis-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ------------------------------------------------------- report / settings panels */
+
+.adis-panel,
+.adis-settings {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--adis-border);
+  border-radius: 8px;
+  background: var(--adis-neutral-bg);
+}
+
+.adis-panel__label {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--adis-ink-soft);
+}
+
+.adis-panel__choices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.adis-choice {
+  appearance: none;
+  text-align: left;
+  border: 1px solid var(--adis-border);
+  border-radius: 6px;
+  background: var(--adis-surface);
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--adis-ink);
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.adis-choice:hover {
+  background: #fff;
+  border-color: var(--adis-neutral-edge);
+}
+
+.adis-choice:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.adis-panel__status {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--adis-ink-soft);
+  min-height: 1em;
+}
+
+/* --------------------------------------------------------------------- footer */
+
+.adis-foot {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 16px 14px;
+}
+
+.adis-link {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 4px 2px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--adis-ink-soft);
+  cursor: pointer;
+}
+
+.adis-link:hover {
+  color: var(--adis-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* -------------------------------------------------------------------- settings */
+
+.adis-settings {
+  margin: 0 16px 16px;
+}
+
+.adis-setting + .adis-setting {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--adis-border);
+}
+
+.adis-setting--stack {
+  display: block;
+}
+
+/* Toggle switch */
+.adis-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.adis-switch__text {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.adis-switch__title {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.adis-switch__sub {
+  font-size: 12px;
+  color: var(--adis-ink-soft);
+}
+
+.adis-switch__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.adis-switch__track {
+  flex: 0 0 auto;
+  position: relative;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--adis-neutral-edge);
+  transition: background-color 140ms ease;
+}
+
+.adis-switch__track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.3);
+  transition: transform 140ms ease;
+}
+
+.adis-switch__input:checked + .adis-switch__track {
+  background: var(--adis-safe-edge);
+}
+
+.adis-switch__input:checked + .adis-switch__track::after {
+  transform: translateX(16px);
+}
+
+/* Text field */
+.adis-field__label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.adis-field__input {
+  width: 100%;
+  border: 1px solid var(--adis-neutral-edge);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--adis-ink);
+}
+
+.adis-field__error {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--adis-alert-ink);
+}
+
+.adis-field__note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--adis-ink-soft);
+  min-height: 1em;
+}
+
+/* ---------------------------------------------------------------- focus ring */
+
+.adis-btn:focus-visible,
+.adis-link:focus-visible,
+.adis-choice:focus-visible,
+.adis-field__input:focus-visible,
+.adis-switch__input:focus-visible + .adis-switch__track {
+  outline: 2px solid var(--adis-caution-edge);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------- motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .adis-btn,
+  .adis-switch__track,
+  .adis-switch__track::after,
+  .adis-choice {
+    transition: none;
+  }
+}

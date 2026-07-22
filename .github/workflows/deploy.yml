@@ -1,0 +1,88 @@
+# ============================================================
+# gyAI — Continuous Deployment (Fly.io)
+# Deploys to production on push to main, gated on the test suite.
+#
+# Prerequisites (one-time):
+#   1. flyctl launch / flyctl apps create adis-api   (matches fly.toml)
+#   2. flyctl secrets set SUPABASE_URL=... SUPABASE_KEY=... REDIS_URL=... \
+#        ADIS_API_KEY=... ADIS_ADMIN_KEY=... SECRET_KEY=...
+#   3. Create a deploy token:  flyctl tokens create deploy
+#      Add it to the repo as an Actions secret named FLY_API_TOKEN
+#      (Settings -> Secrets and variables -> Actions).
+#   4. Commit the trained model to ml/models/*.pkl (FLAG 9). With
+#      REQUIRE_MODEL=true in fly.toml, a missing model fails the release
+#      health check and this deploy will (correctly) fail.
+# ============================================================
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# One production deploy at a time; don't cancel a deploy mid-flight.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  test:
+    name: Test gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install system libraries
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgomp1
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run tests
+        env:
+          TESTING: "true"
+          FLASK_ENV: "testing"
+          REQUIRE_MODEL: "false"
+        run: pytest -q
+
+  deploy:
+    name: Deploy to Fly.io
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy
+        # --remote-only builds the image on Fly's builders (no Docker needed
+        # in the runner). Reads fly.toml and the Dockerfile from the repo.
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Smoke test /health
+        # flyctl already waits on Fly's own health checks during the release,
+        # but this confirms the public URL serves 200 end-to-end. Update the
+        # host if your app name differs from fly.toml's app = "adis-api".
+        run: |
+          curl --fail --silent --show-error \
+               --retry 5 --retry-delay 10 --retry-connrefused \
+               https://gyai-api.fly.dev/health

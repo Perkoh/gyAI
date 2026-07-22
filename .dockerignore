@@ -1,0 +1,59 @@
+# ============================================================
+# ADIS — .dockerignore
+# Keep the API image small: only ship what's needed to SERVE.
+# ============================================================
+
+# --- VCS / project meta ---
+.git
+.gitignore
+.github/
+README.md
+PROJECT_BLUEPRINT.md
+*.md
+
+# --- Python caches ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+
+# --- Local dev / secrets ---
+.env
+.env.*
+!.env.example
+docker-compose.yml
+docker-compose.*.yml
+
+# --- Browser extension (built & shipped separately) ---
+extension/
+
+# --- Tests & dev tooling ---
+tests/
+requirements-dev.txt
+
+# --- ML: exclude training code + raw/processed datasets ---
+# NOTE: model_server / explainer / reason_mapper stay in the image.
+# Only training-time code and large data are excluded.
+# ⚠️ If your saved .pkl unpickles a class DEFINED under ml/training,
+#    remove the ml/training/ line so that class is importable at runtime.
+#   ml/training/
+ml/data/
+ml_data/
+scripts/
+node_modules/
+package.json
+package-lock.json
+# Keep the trained model(s): do NOT ignore ml/models/*.pkl
+
+# --- Misc ---
+*.log
+*.parquet
+*.csv
+!ml/models/*
+.DS_Store

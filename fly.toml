@@ -1,0 +1,112 @@
+# ============================================================
+# gyAI — AI-Powered Domain Intelligence System
+# Fly.io deployment config
+# Deploy:  flyctl deploy
+# App URL: https://gyai-api.fly.dev
+#
+# Env var names below match config/settings.py exactly.
+# Secrets are NOT stored here — see the block at the bottom.
+# ============================================================
+
+app = "gyai-api"
+
+# Pick the region closest to your users. Options near West Africa:
+#   cdg (Paris), lhr (London), jnb (Johannesburg), iad (US-East)
+primary_region = "cdg"
+
+# Drain window on deploy/stop so in-flight analyze requests (incl. slow
+# WHOIS lookups) finish cleanly. Top-level keys must precede any [table].
+kill_signal  = "SIGTERM"
+kill_timeout = "30s"
+
+[build]
+  # Uses the Dockerfile in this directory.
+
+# ------------------------------------------------------------
+# Non-secret runtime config. Names match config/settings.py.
+# Secrets (SUPABASE_KEY, REDIS_URL, ADIS_API_KEY, ...) are set via
+# `flyctl secrets set` and injected as env vars at runtime.
+# ------------------------------------------------------------
+[env]
+  PORT          = "8080"
+  FLASK_ENV     = "production"
+  # If the model file is missing, fail the deploy fast instead of
+  # serving 503s. Set to "false" to allow a degraded boot instead.
+  REQUIRE_MODEL = "true"
+
+  # Logging (settings.py expects an UPPERCASE level; gunicorn lowercases it).
+  LOG_LEVEL = "INFO"
+  LOG_JSON  = "true"
+
+  # Model selection (settings.py derives the absolute MODEL_PATH from these).
+  # Bump both when you ship a new model version.
+  MODEL_FILENAME = "lgbm_model_v1.1.0.pkl"
+  MODEL_VERSION  = "v1.1.0"
+
+  FLY_APP_NAME = "gyai-api"
+
+  # Gunicorn tuning (read by gunicorn.conf.py; GUNICORN_WORKERS/TIMEOUT are
+  # also mirrored into settings.py). See the VM sizing note re: workers.
+  GUNICORN_WORKERS = "2"
+  GUNICORN_THREADS = "4"
+  GUNICORN_TIMEOUT = "10"
+  GUNICORN_PRELOAD = "true"
+
+# ------------------------------------------------------------
+# HTTP service — HTTPS terminated by Fly's proxy (FLAG 5 ✔)
+# ------------------------------------------------------------
+[http_service]
+  internal_port = 8080
+  force_https   = true
+
+  # FLAG 2 — always-on, NO cold starts.
+  # "off" => Fly Proxy never stops the machine for being idle.
+  auto_stop_machines   = "off"
+  auto_start_machines  = false
+  min_machines_running = 1
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type       = "requests"
+    soft_limit = 8
+    hard_limit = 12
+
+  # Health check hits the ROOT /health probe registered in api/app.py
+  # (NOT /api/v1/health). It returns 200 only when the model is loaded,
+  # and stays 200 if only Redis is degraded — so Redis blips won't cause
+  # Fly to cycle the machine.
+  [[http_service.checks]]
+    interval     = "15s"
+    timeout      = "4s"
+    grace_period = "45s"
+    method       = "GET"
+    path         = "/health"
+
+# ------------------------------------------------------------
+# VM sizing.
+# The 256MB default is NOT enough for LightGBM + SHAP + the loaded model.
+# 1GB is a safe starting point. To trim cost, try memory = "512mb" first
+# (with GUNICORN_PRELOAD=true) and watch `flyctl logs` for OOM kills;
+# bump back to 1024mb if they appear.
+# ------------------------------------------------------------
+[[vm]]
+  size   = "shared-cpu-1x"
+  memory = "1024mb"
+
+# ============================================================
+# SECRETS TO SET BEFORE FIRST DEPLOY (names match config/settings.py):
+#
+#   flyctl secrets set \
+#     SUPABASE_URL="https://xxxx.supabase.co" \
+#     SUPABASE_KEY="<service-role-key>" \
+#     REDIS_URL="rediss://:<pw>@<host>.upstash.io:6379" \
+#     ADIS_API_KEY="<key for authenticated endpoints>" \
+#     ADIS_ADMIN_KEY="<key for /admin endpoints>" \
+#     SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
+#
+# Notes:
+#   * Upstash uses TLS — use the rediss:// (double-s) URL.
+#   * SECRET_KEY has an insecure default in settings.py; always set it here.
+#   * flask-limiter stores counters in REDIS_URL, so rate-limit checks also
+#     consume Upstash commands (FLAG 3) — watch the 10k/day free budget.
+# ============================================================

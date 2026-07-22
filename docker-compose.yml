@@ -1,0 +1,80 @@
+# ============================================================
+# ADIS — Local development environment
+# Start:  docker compose up --build
+#
+# Brings up:
+#   - redis : local cache (stands in for Upstash in dev)
+#   - api   : the Flask API with hot-reload
+#
+# Supabase is a hosted service, so there's no local container for it.
+# Point SUPABASE_URL / SUPABASE_KEY in your .env at your Supabase project
+# (a free dev project is fine). REDIS_URL is overridden below to use the
+# local redis container instead of Upstash.
+#
+# Env var names match config/settings.py.
+# ============================================================
+
+name: adis
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: adis-redis
+    # Ephemeral cache: no persistence needed for local dev.
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - adis-net
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: adis-api
+    # Base config (SUPABASE_URL, SUPABASE_KEY, ADIS_API_KEY, ADIS_ADMIN_KEY,
+    # SECRET_KEY, ...) is read from .env; the values below override it for
+    # local development.
+    env_file:
+      - .env
+    environment:
+      PORT: "8080"
+      FLASK_ENV: "development"
+      FLASK_DEBUG: "true"
+      LOG_LEVEL: "DEBUG"
+      # Let the API boot even before the model is trained (incremental dev).
+      REQUIRE_MODEL: "false"
+      # Talk to the local redis service, not Upstash.
+      REDIS_URL: "redis://redis:6379/0"
+      # Optional: relax CORS while testing from a local web page.
+      # CORS_ORIGINS: "chrome-extension://*,moz-extension://*,http://localhost:*"
+    ports:
+      - "8080:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+    # Mount the source for live editing. /opt/venv lives outside /app, so the
+    # mount doesn't shadow installed dependencies (flask, gunicorn, etc.).
+    volumes:
+      - ./:/app
+    # Override the production gunicorn CMD with Flask's dev server so code
+    # changes reload automatically. create_app is a no-arg factory.
+    command: >
+      flask --app "api.app:create_app" run
+      --host 0.0.0.0 --port 8080 --debug
+    # The image's HEALTHCHECK expects a loaded model (503 otherwise). During
+    # early dev the model may not exist yet, so disable it here to avoid a
+    # confusing "unhealthy" status. Re-enable by removing this block.
+    healthcheck:
+      disable: true
+    networks:
+      - adis-net
+
+networks:
+  adis-net:
+    driver: bridge
