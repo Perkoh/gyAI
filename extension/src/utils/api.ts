@@ -84,7 +84,7 @@ export class AdisApiClient {
       // Extensions can only call HTTPS endpoints (§FLAG 5). Warn loudly rather
       // than fail construction, so misconfiguration is obvious in dev.
       // eslint-disable-next-line no-console
-      console.warn(`[ADIS] API base URL is not HTTPS: ${this.baseUrl}`);
+      console.warn(`[gyAI] API base URL is not HTTPS: ${this.baseUrl}`);
     }
   }
 

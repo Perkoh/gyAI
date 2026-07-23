@@ -98,7 +98,7 @@ async function patchSettings(patch: Partial<ExtensionSettings>): Promise<Extensi
 
 function $<T extends HTMLElement = HTMLElement>(id: string): T {
   const node = document.getElementById(id);
-  if (!node) throw new Error(`[ADIS popup] missing element #${id}`);
+  if (!node) throw new Error(`[gyAI popup] missing element #${id}`);
   return node as T;
 }
 

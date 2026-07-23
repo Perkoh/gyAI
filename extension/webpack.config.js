@@ -10,7 +10,7 @@
  *   ├── manifest.json
  *   ├── background/service_worker.js      (webNavigation listener)
  *   ├── content/content_script.js         (injected via chrome.scripting)
- *   ├── content/content_script.css        (injected via scripting.insertCSS)
+ *   ├── content/content_script.css        (loaded via runtime.getURL — needs web_accessible_resources)
  *   ├── popup/popup.js  +  popup.html  +  popup.css
  *   └── icons/icon16|48|128.png
  */
@@ -61,16 +61,12 @@ module.exports = (env, argv) => {
         patterns: [
           // manifest is authored here and copied verbatim.
           { from: "manifest.json", to: "manifest.json" },
-          // Assets that aren't imported through JS. noErrorOnMissing lets the
-          // build succeed while these files are still being written.
-          { from: "public/icons", to: "icons", noErrorOnMissing: true },
-          { from: "src/popup/popup.html", to: "popup/popup.html", noErrorOnMissing: true },
-          { from: "src/popup/popup.css", to: "popup/popup.css", noErrorOnMissing: true },
-          {
-            from: "src/content/content_script.css",
-            to: "content/content_script.css",
-            noErrorOnMissing: true
-          }
+          // Assets that aren't imported through JS. These must all exist —
+          // a missing one should fail the build, not ship a broken package.
+          { from: "public/icons", to: "icons" },
+          { from: "src/popup/popup.html", to: "popup/popup.html" },
+          { from: "src/popup/popup.css", to: "popup/popup.css" },
+          { from: "src/content/content_script.css", to: "content/content_script.css" }
         ]
       })
     ],

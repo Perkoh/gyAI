@@ -239,7 +239,7 @@ async function analyzeDomain(
     if (!result.ok) {
       // Silent, non-fatal: log and treat as "unknown" (no banner shown).
       // eslint-disable-next-line no-console
-      console.warn(`[ADIS] analyze(${domain}) failed: ${(result as any).error.code} — ${(result as any).error.message}`);
+      console.warn(`[gyAI] analyze(${domain}) failed: ${(result as any).error.code} — ${(result as any).error.message}`);
       return null;
     }
     const flagged = tierForScore(result.data.score) !== 'silent';
@@ -284,7 +284,7 @@ async function deliverBanner(
       await chrome.tabs.sendMessage(tabId, message);
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.warn(`[ADIS] could not deliver banner to tab ${tabId}:`, err);
+      console.warn(`[gyAI] could not deliver banner to tab ${tabId}:`, err);
     }
   }
 }
@@ -475,7 +475,7 @@ async function handleLeaveSite(sender: chrome.runtime.MessageSender): Promise<vo
     await chrome.tabs.update(tabId, { url: LEAVE_SITE_URL });
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.warn(`[ADIS] leave-site navigation failed for tab ${tabId}:`, err);
+    console.warn(`[gyAI] leave-site navigation failed for tab ${tabId}:`, err);
   }
 }
 

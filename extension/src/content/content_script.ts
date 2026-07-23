@@ -54,7 +54,7 @@ declare global {
  * ========================================================================== */
 
 /** id of the shadow host element we attach to the page. */
-const HOST_ID = 'adis-security-banner-host';
+const HOST_ID = 'gyai-security-banner-host';
 
 /** How many reasons each tier shows (§4.3). */
 const REASON_LIMIT: Record<Exclude<NotificationTier, 'silent'>, number> = {
